@@ -2,6 +2,9 @@
   "name": "dsh-plugin-open-editor",
   "version": "0.1.0",
   "description": "Open the current DSH project in your favorite editor — one click for the default (VS Code), a picker for Cursor, Windsurf, Trae, JetBrains IDEs, Sublime Text, Vim/Neovim, Emacs, the OS file manager, and custom commands.",
+  "contributors": [
+    "Civitasv"
+  ],
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
