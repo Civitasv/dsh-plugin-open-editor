@@ -11,6 +11,24 @@
 - 未安装的编辑器会置灰显示「未安装」；
 - 打开动作发生在 **DSH 宿主机**（浏览器所在机器）上，无需浏览器具备任何 shell 权限。
 
+## 打开文件与定位行（供其它插件复用）
+
+`POST {routePath}` 除打开目录外，也支持**打开文件并定位到行**：
+
+```json
+{ "editor": "vscode", "path": "/abs/path/to/file.ts", "line": 42 }
+```
+
+- `path` 可以是目录或文件；带 `line` 时按编辑器的行定位方式打开：
+  - VS Code / Insiders / Cursor / Windsurf / Trae：`code --goto 文件:行`
+  - Vim / GVim / Neovim / Emacs：`+行 文件`
+  - Sublime Text：`文件:行`
+  - 其它编辑器（JetBrains 系、Notepad++ 等）：打开文件，忽略行
+- 自定义编辑器模板支持 `{line}` 占位符（如 `["my-editor", "--line", "{line}", "{path}"]`），
+  模板里没有 `{line}` 时忽略行参数。
+
+> diff-review 插件的「在编辑器中打开」/「打开该行」即复用此能力。
+
 ## 安装
 
 本仓库已包含构建产物（`dist/index.js` 与 `client.js`），可直接使用；修改过源码才需要

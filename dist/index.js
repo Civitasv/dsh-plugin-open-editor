@@ -7,11 +7,11 @@ import { isAbsolute, sep } from "node:path";
 // src/shared/editors.ts
 var DEFAULT_EDITOR = "vscode";
 var EDITORS = [
-  { id: "vscode", label: "VS Code", bins: ["code"] },
-  { id: "vscode-insiders", label: "VS Code Insiders", bins: ["code-insiders"] },
-  { id: "cursor", label: "Cursor", bins: ["cursor"] },
-  { id: "windsurf", label: "Windsurf", bins: ["windsurf"] },
-  { id: "trae", label: "Trae", bins: ["trae"] },
+  { id: "vscode", label: "VS Code", bins: ["code"], lineStrategy: "vscode" },
+  { id: "vscode-insiders", label: "VS Code Insiders", bins: ["code-insiders"], lineStrategy: "vscode" },
+  { id: "cursor", label: "Cursor", bins: ["cursor"], lineStrategy: "vscode" },
+  { id: "windsurf", label: "Windsurf", bins: ["windsurf"], lineStrategy: "vscode" },
+  { id: "trae", label: "Trae", bins: ["trae"], lineStrategy: "vscode" },
   { id: "intellij", label: "IntelliJ IDEA", bins: ["idea", "idea64"] },
   { id: "pycharm", label: "PyCharm", bins: ["pycharm", "charm"] },
   { id: "webstorm", label: "WebStorm", bins: ["webstorm"] },
@@ -20,11 +20,11 @@ var EDITORS = [
   { id: "rider", label: "Rider", bins: ["rider"] },
   { id: "phpstorm", label: "PhpStorm", bins: ["phpstorm"] },
   { id: "rubymine", label: "RubyMine", bins: ["rubymine"] },
-  { id: "sublime", label: "Sublime Text", bins: ["subl"] },
+  { id: "sublime", label: "Sublime Text", bins: ["subl"], lineStrategy: "sublime" },
   { id: "notepadpp", label: "Notepad++", bins: ["notepad++"] },
-  { id: "vim", label: "Vim", bins: ["vim", "gvim"] },
-  { id: "nvim", label: "Neovim", bins: ["nvim"] },
-  { id: "emacs", label: "Emacs", bins: ["emacs"] }
+  { id: "vim", label: "Vim", bins: ["vim", "gvim"], lineStrategy: "plus" },
+  { id: "nvim", label: "Neovim", bins: ["nvim"], lineStrategy: "plus" },
+  { id: "emacs", label: "Emacs", bins: ["emacs"], lineStrategy: "plus" }
 ];
 function fileManagerDef() {
   const platform = process.platform;
@@ -104,7 +104,8 @@ function validatePath(raw, allowedRoots) {
   if (!isAbsolute(p)) return { error: `path must be absolute: ${p}` };
   if (!existsSync(p)) return { error: `path does not exist: ${p}` };
   try {
-    if (!statSync(p).isDirectory()) return { error: `path is not a directory: ${p}` };
+    const stat = statSync(p);
+    if (!stat.isDirectory() && !stat.isFile()) return { error: `path is neither a file nor a directory: ${p}` };
   } catch (e) {
     return { error: `cannot stat path: ${e instanceof Error ? e.message : String(e)}` };
   }
@@ -130,12 +131,23 @@ function launch(bin, args) {
     child.unref();
   }
 }
-function buildArgs(config, def, path) {
+function buildArgs(config, def, path, line) {
   const custom = config.customEditors.find((c) => c.id === def.id);
   if (custom) {
     const template = custom.command.length > 0 ? custom.command : [def.bins[0] ?? def.id];
     const rest = template.slice(1);
-    return rest.includes("{path}") ? rest.map((a) => a === "{path}" ? path : a) : [...rest, path];
+    const hasPath = rest.includes("{path}");
+    const hasLine = rest.includes("{line}");
+    const args = rest.map((a) => a === "{path}" ? path : a === "{line}" ? String(line ?? "") : a);
+    if (!hasPath) args.push(path);
+    if (line !== void 0 && !hasLine) {
+    }
+    return args;
+  }
+  if (line !== void 0 && def.lineStrategy) {
+    if (def.lineStrategy === "vscode") return [...config.extraArgs, "--goto", `${path}:${line}`];
+    if (def.lineStrategy === "plus") return [...config.extraArgs, `+${line}`, path];
+    return [...config.extraArgs, `${path}:${line}`];
   }
   return [...config.extraArgs, path];
 }
@@ -176,6 +188,10 @@ async function handleOpen(config, raw) {
   const record = isRecord(raw) ? raw : {};
   const pathResult = validatePath(record.path, config.allowedRoots);
   if ("error" in pathResult) return { status: 400, body: { ok: false, error: pathResult.error, code: "bad-path" } };
+  const line = record.line;
+  if (line !== void 0 && line !== null && (typeof line !== "number" || !Number.isInteger(line) || line < 1 || line > 1e9)) {
+    return { status: 400, body: { ok: false, error: 'invalid "line": positive integer expected' } };
+  }
   const requested = typeof record.editor === "string" && record.editor.trim() ? record.editor.trim() : config.defaultEditor;
   const def = resolveEditor(config, requested);
   if (!def) return { status: 400, body: { ok: false, error: `unknown editor: ${requested}` } };
@@ -186,7 +202,7 @@ async function handleOpen(config, raw) {
       body: { ok: false, error: `${def.label} is not installed or not on PATH`, code: "editor-not-found" }
     };
   }
-  const args = buildArgs(config, def, pathResult.path);
+  const args = buildArgs(config, def, pathResult.path, line ?? void 0);
   launch(bin, args);
   return { status: 200, body: { ok: true, editor: def.id, label: def.label, bin, path: pathResult.path } };
 }

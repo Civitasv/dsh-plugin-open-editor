@@ -23,8 +23,10 @@ export interface EditorCatalogResponse {
 export interface OpenRequest {
   /** Editor id; omitted/empty falls back to the configured default. */
   editor?: string
-  /** Absolute directory path to open (the session's workspace). */
+  /** Absolute path to open: a directory, or a file when `line` is targeted. */
   path: string
+  /** Optional 1-based line to jump to (file opens use `--goto`-style flags). */
+  line?: number
 }
 
 export type OpenResponse =

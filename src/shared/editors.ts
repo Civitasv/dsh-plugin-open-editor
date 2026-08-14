@@ -17,16 +17,21 @@ export interface EditorDef {
   bins: string[]
   /** Windows-only extra candidates (absolute paths, .exe / .cmd / .bat). */
   winBins?: string[]
+  /**
+   * How to build the launch arguments when opening a FILE at a line.
+   * Absent = open the file without a line target.
+   */
+  lineStrategy?: 'vscode' | 'plus' | 'sublime'
 }
 
 export const DEFAULT_EDITOR = 'vscode'
 
 export const EDITORS: readonly EditorDef[] = [
-  { id: 'vscode', label: 'VS Code', bins: ['code'] },
-  { id: 'vscode-insiders', label: 'VS Code Insiders', bins: ['code-insiders'] },
-  { id: 'cursor', label: 'Cursor', bins: ['cursor'] },
-  { id: 'windsurf', label: 'Windsurf', bins: ['windsurf'] },
-  { id: 'trae', label: 'Trae', bins: ['trae'] },
+  { id: 'vscode', label: 'VS Code', bins: ['code'], lineStrategy: 'vscode' },
+  { id: 'vscode-insiders', label: 'VS Code Insiders', bins: ['code-insiders'], lineStrategy: 'vscode' },
+  { id: 'cursor', label: 'Cursor', bins: ['cursor'], lineStrategy: 'vscode' },
+  { id: 'windsurf', label: 'Windsurf', bins: ['windsurf'], lineStrategy: 'vscode' },
+  { id: 'trae', label: 'Trae', bins: ['trae'], lineStrategy: 'vscode' },
   { id: 'intellij', label: 'IntelliJ IDEA', bins: ['idea', 'idea64'] },
   { id: 'pycharm', label: 'PyCharm', bins: ['pycharm', 'charm'] },
   { id: 'webstorm', label: 'WebStorm', bins: ['webstorm'] },
@@ -35,11 +40,11 @@ export const EDITORS: readonly EditorDef[] = [
   { id: 'rider', label: 'Rider', bins: ['rider'] },
   { id: 'phpstorm', label: 'PhpStorm', bins: ['phpstorm'] },
   { id: 'rubymine', label: 'RubyMine', bins: ['rubymine'] },
-  { id: 'sublime', label: 'Sublime Text', bins: ['subl'] },
+  { id: 'sublime', label: 'Sublime Text', bins: ['subl'], lineStrategy: 'sublime' },
   { id: 'notepadpp', label: 'Notepad++', bins: ['notepad++'] },
-  { id: 'vim', label: 'Vim', bins: ['vim', 'gvim'] },
-  { id: 'nvim', label: 'Neovim', bins: ['nvim'] },
-  { id: 'emacs', label: 'Emacs', bins: ['emacs'] },
+  { id: 'vim', label: 'Vim', bins: ['vim', 'gvim'], lineStrategy: 'plus' },
+  { id: 'nvim', label: 'Neovim', bins: ['nvim'], lineStrategy: 'plus' },
+  { id: 'emacs', label: 'Emacs', bins: ['emacs'], lineStrategy: 'plus' },
 ]
 
 /**

@@ -6,9 +6,11 @@
  *
  * - `GET  {statusPath}`  — editor catalog with availability probes, so the
  *   browser picker can gray out editors that are not installed.
- * - `POST {routePath}`   — `{ editor?, path }`; validates the path (absolute,
- *   existing directory, optional `allowedRoots` allowlist) and launches the
- *   editor detached against that directory.
+ * - `POST {routePath}`   — `{ editor?, path, line? }`; validates the path
+ *   (absolute, existing file or directory, optional `allowedRoots` allowlist)
+ *   and launches the editor detached. With `line`, editors that support line
+ *   targeting open the file at that line (`--goto file:line` for the VS Code
+ *   family, `+line file` for vim/nvim/emacs, `file:line` for Sublime Text).
  *
  * Launch semantics:
  * - POSIX: `spawn(bin, args, { detached, stdio: 'ignore' })` and unref — the
@@ -149,7 +151,8 @@ function validatePath(raw: unknown, allowedRoots: string[]): PathResult {
   if (!isAbsolute(p)) return { error: `path must be absolute: ${p}` }
   if (!existsSync(p)) return { error: `path does not exist: ${p}` }
   try {
-    if (!statSync(p).isDirectory()) return { error: `path is not a directory: ${p}` }
+    const stat = statSync(p)
+    if (!stat.isDirectory() && !stat.isFile()) return { error: `path is neither a file nor a directory: ${p}` }
   } catch (e) {
     return { error: `cannot stat path: ${e instanceof Error ? e.message : String(e)}` }
   }
@@ -195,13 +198,35 @@ function launch(bin: string, args: string[]): void {
   }
 }
 
-/** Build the final argument list for a launch. */
-function buildArgs(config: Config, def: EditorDef, path: string): string[] {
+/**
+ * Build the final argument list for a launch.
+ *
+ * - Custom editors: the command template wins; a literal `{path}` element is
+ *   replaced with the target, a literal `{line}` with the line number when
+ *   present (otherwise the line is ignored).
+ * - Built-ins: `extraArgs` + the target. With a file `line`, the editor's
+ *   `lineStrategy` produces the target form (`--goto file:line`,
+ *   `+line file`, `file:line`); editors without a strategy open the file
+ *   without a line.
+ */
+function buildArgs(config: Config, def: EditorDef, path: string, line?: number): string[] {
   const custom = config.customEditors.find((c) => c.id === def.id)
   if (custom) {
     const template = custom.command.length > 0 ? custom.command : [def.bins[0] ?? def.id]
     const rest = template.slice(1)
-    return rest.includes('{path}') ? rest.map((a) => (a === '{path}' ? path : a)) : [...rest, path]
+    const hasPath = rest.includes('{path}')
+    const hasLine = rest.includes('{line}')
+    const args = rest.map((a) => (a === '{path}' ? path : a === '{line}' ? String(line ?? '') : a))
+    if (!hasPath) args.push(path)
+    if (line !== undefined && !hasLine) {
+      // No {line} slot in the template — line targeting unsupported; open the file only.
+    }
+    return args
+  }
+  if (line !== undefined && def.lineStrategy) {
+    if (def.lineStrategy === 'vscode') return [...config.extraArgs, '--goto', `${path}:${line}`]
+    if (def.lineStrategy === 'plus') return [...config.extraArgs, `+${line}`, path]
+    return [...config.extraArgs, `${path}:${line}`] // sublime
   }
   return [...config.extraArgs, path]
 }
@@ -252,6 +277,11 @@ async function handleOpen(config: Config, raw: unknown): Promise<{ status: numbe
   const pathResult = validatePath(record.path, config.allowedRoots)
   if ('error' in pathResult) return { status: 400, body: { ok: false, error: pathResult.error, code: 'bad-path' } }
 
+  const line = record.line
+  if (line !== undefined && line !== null && (typeof line !== 'number' || !Number.isInteger(line) || line < 1 || line > 1_000_000_000)) {
+    return { status: 400, body: { ok: false, error: 'invalid "line": positive integer expected' } }
+  }
+
   const requested = typeof record.editor === 'string' && record.editor.trim() ? record.editor.trim() : config.defaultEditor
   const def = resolveEditor(config, requested)
   if (!def) return { status: 400, body: { ok: false, error: `unknown editor: ${requested}` } }
@@ -264,7 +294,7 @@ async function handleOpen(config: Config, raw: unknown): Promise<{ status: numbe
     }
   }
 
-  const args = buildArgs(config, def, pathResult.path)
+  const args = buildArgs(config, def, pathResult.path, line ?? undefined)
   launch(bin, args)
   return { status: 200, body: { ok: true, editor: def.id, label: def.label, bin, path: pathResult.path } }
 }
