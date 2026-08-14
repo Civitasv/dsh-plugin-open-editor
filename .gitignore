@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+.npm-cache/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Editor junk
+.vscode/
+.idea/
+
+# Build temp
+.tmp-client.js
