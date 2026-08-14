@@ -1,6 +1,6 @@
 # dsh-plugin-open-editor
 
-[showcase](./screenshots/image.png)
+![showcase](./screenshots/image.png)
 
 一键把 **当前项目** 用你喜欢的编辑器打开。插件在 DSH 会话页头的
 操作区添加一个入口：
