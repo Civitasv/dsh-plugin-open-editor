@@ -186,10 +186,11 @@ function validatePath(raw: unknown, allowedRoots: string[]): PathResult {
  */
 function launch(bin: string, args: string[]): void {
   if (process.platform === 'win32') {
-    const child = spawn('cmd.exe', ['/c', 'start', '', bin, ...args], {
+    const child = spawn(bin, args, {
       detached: true,
       stdio: 'ignore',
       windowsHide: true,
+      shell: true,
     })
     child.unref()
   } else {
