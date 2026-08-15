@@ -118,13 +118,9 @@ function validatePath(raw, allowedRoots) {
   }
   return { path: p };
 }
-function powerShellLiteral(value) {
-  return "'" + value.replace(/'/g, "''") + "'";
-}
 function launch(bin, args) {
   if (process.platform === "win32") {
-    const command = "Start-Process -FilePath " + powerShellLiteral(bin) + " -ArgumentList @(" + args.map(powerShellLiteral).join(",") + ") -WindowStyle Hidden";
-    const child = spawn("powershell.exe", ["-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", command], {
+    const child = spawn("cmd.exe", ["/c", "start", "", bin, ...args], {
       detached: true,
       stdio: "ignore",
       windowsHide: true

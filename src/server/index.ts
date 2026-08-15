@@ -184,14 +184,9 @@ function validatePath(raw: unknown, allowedRoots: string[]): PathResult {
  * `"C:\path with spaces"` = one argument). No manual quoting, so no nested
  * quotes to break cmd's re-parsing.
  */
-function powerShellLiteral(value: string): string {
-  return "'" + value.replace(/'/g, "''") + "'"
-}
-
 function launch(bin: string, args: string[]): void {
   if (process.platform === 'win32') {
-    const command = 'Start-Process -FilePath ' + powerShellLiteral(bin) + ' -ArgumentList @(' + args.map(powerShellLiteral).join(',') + ') -WindowStyle Hidden'
-    const child = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-WindowStyle', 'Hidden', '-Command', command], {
+    const child = spawn('cmd.exe', ['/c', 'start', '', bin, ...args], {
       detached: true,
       stdio: 'ignore',
       windowsHide: true,
