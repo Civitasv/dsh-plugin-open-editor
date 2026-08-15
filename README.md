@@ -34,26 +34,60 @@
 本仓库已包含构建产物（`dist/index.js` 与 `client.js`），可直接使用；修改过源码才需要
 先执行 `npm install && npm run build`。
 
-1. **把插件放进 profile 的依赖目录**（与 `dsh-plugin-colorscheme` 同层，保证 DSH 能解析）：
+### 一键安装（推荐）
 
-   ```sh
-   # PowerShell（Windows）
-   Copy-Item -Recurse <本插件目录> "$HOME\.dsh\profiles\node_modules\dsh-plugin-open-editor"
-   ```
+```sh
+# macOS / Linux
+bash install.sh
 
-   如果机器装了 pnpm，也可以用 `dsh plugin --profile web add <本插件绝对路径>`。
+# Windows（PowerShell）
+powershell -ExecutionPolicy Bypass -File install.ps1
+```
 
-2. **注册到配置**：编辑 `~/.dsh/profiles/web/cordis.patch.yml`：
+脚本会：安装依赖（含 devDependencies，便于本地开发）→ 链接进
+`~/.dsh/profiles/node_modules` → 注册 `cordis.patch.yml` → 提示重启与验证。
 
-   ```yaml
-   - insert:
-       - id: colorscheme
-         name: dsh-plugin-colorscheme
-       - id: open-editor
-         name: dsh-plugin-open-editor
-   ```
+### 手动安装
 
-3. **重启 `dsh web`**，打开任意会话，页头标题旁会出现「在编辑器中打开」按钮。
+> **用链接而不是拷贝**：`Copy-Item` 复制一份后改源码不会同步，重复安装还会
+> 冲突；用下面的链接（Junction / 符号链接）指向本仓库，改源码即时生效。
+
+```sh
+# 1. 链接进 profile 依赖目录
+#    macOS / Linux：
+ln -sfn "$PWD" ~/.dsh/profiles/node_modules/dsh-plugin-open-editor
+#    Windows（PowerShell，Junction 无需管理员权限）：
+#    New-Item -ItemType Junction -Path "$HOME\.dsh\profiles\node_modules\dsh-plugin-open-editor" -Target "$PWD"
+
+# 2. 注册到 ~/.dsh/profiles/web/cordis.patch.yml
+#    - insert:
+#        - id: open-editor
+#          name: dsh-plugin-open-editor
+
+# 3. 重启 dsh web
+```
+
+> 装了 pnpm 的话，也可以用 `dsh plugin --profile web add <本插件绝对路径>` 代替
+> 第 1 步（等价于链接）。pnpm 未安装时先 `npm install -g pnpm`（或 `corepack enable`）。
+
+### 验证
+
+```sh
+dsh --profile web --dump-config | grep dsh-plugin-open-editor
+# 输出应包含：- id: open-editor / name: dsh-plugin-open-editor
+```
+
+重启后打开任意会话，页头标题旁会出现「在编辑器中打开」按钮。
+
+### 开发
+
+插件以链接方式接入 profile，改源码后：
+
+```sh
+npm run build   # 重新生成 dist/ 与 client.js
+```
+
+server 端改动需重启 `dsh web`；纯 client 端改动刷新页面即可。
 
 ## 使用
 

@@ -20,7 +20,9 @@
     "dist",
     "client.js",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "install.sh",
+    "install.ps1"
   ],
   "dsh": {
     "client": {
