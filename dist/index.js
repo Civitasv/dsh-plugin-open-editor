@@ -118,13 +118,16 @@ function validatePath(raw, allowedRoots) {
   }
   return { path: p };
 }
+function powerShellLiteral(value) {
+  return "'" + value.replace(/'/g, "''") + "'";
+}
 function launch(bin, args) {
   if (process.platform === "win32") {
-    const child = spawn(bin, args, {
+    const command = "Start-Process -FilePath " + powerShellLiteral(bin) + " -ArgumentList @(" + args.map(powerShellLiteral).join(",") + ") -WindowStyle Hidden";
+    const child = spawn("powershell.exe", ["-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", command], {
       detached: true,
       stdio: "ignore",
-      windowsHide: true,
-      shell: true
+      windowsHide: true
     });
     child.unref();
   } else {
