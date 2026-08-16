@@ -7,7 +7,7 @@
 
 - **点击主体按钮** → 立即用默认编辑器（默认 **VS Code**）打开当前会话的工作目录；
 - **点击箭头** → 弹出编辑器选择器：VS Code / Cursor / Windsurf / Trae /
-  JetBrains 系列 / Sublime Text / Vim / Neovim / Emacs / 系统文件管理器等；
+  JetBrains 系列 / Sublime Text / 系统文件管理器等；
 - 未安装的编辑器会置灰显示「未安装」；
 - 打开动作发生在 **DSH 宿主机**（浏览器所在机器）上，无需浏览器具备任何 shell 权限。
 
@@ -21,7 +21,6 @@
 
 - `path` 可以是目录或文件；带 `line` 时按编辑器的行定位方式打开：
   - VS Code / Insiders / Cursor / Windsurf / Trae：`code --goto 文件:行`
-  - Vim / GVim / Neovim / Emacs：`+行 文件`
   - Sublime Text：`文件:行`
   - 其它编辑器（JetBrains 系、Notepad++ 等）：打开文件，忽略行
 - 自定义编辑器模板支持 `{line}` 占位符（如 `["my-editor", "--line", "{line}", "{path}"]`），
@@ -118,9 +117,6 @@ server 端改动需重启 `dsh web`；纯 client 端改动刷新页面即可。
 | RubyMine | `rubymine` |
 | Sublime Text | `subl` |
 | Notepad++ | `notepad++` |
-| Vim / GVim | `vim` / `gvim` |
-| Neovim | `nvim` |
-| Emacs | `emacs` |
 | 系统文件管理器 | `explorer` / `open` / `xdg-open` |
 
 > 探测依据是命令是否在 `PATH` 中。VS Code 安装后通常会自动把 `code` 加入 PATH；
@@ -162,7 +158,7 @@ server 端改动需重启 `dsh web`；纯 client 端改动刷新页面即可。
 3. 服务器端（DSH 宿主进程，与浏览器同机）校验 path（绝对路径、目录存在、可选
    `allowedRoots`），探测编辑器可执行文件，然后 **detached 启动**：
    - Windows：`cmd /c start "" <editor> "<path>"`（支持 `code.cmd` 等 shim，
-     GUI 应用不弹控制台，vim/nvim 等控制台程序会获得独立窗口）；
+     GUI 应用不弹控制台）；
    - macOS/Linux：`spawn(editor, [path], { detached, stdio: 'ignore' })`。
 4. 编辑器进程与宿主解耦，宿主退出不影响已打开的编辑器。
 

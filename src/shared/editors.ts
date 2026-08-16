@@ -21,7 +21,7 @@ export interface EditorDef {
    * How to build the launch arguments when opening a FILE at a line.
    * Absent = open the file without a line target.
    */
-  lineStrategy?: 'vscode' | 'plus' | 'sublime'
+  lineStrategy?: 'vscode' | 'sublime'
 }
 
 export const DEFAULT_EDITOR = 'vscode'
@@ -42,9 +42,6 @@ export const EDITORS: readonly EditorDef[] = [
   { id: 'rubymine', label: 'RubyMine', bins: ['rubymine'] },
   { id: 'sublime', label: 'Sublime Text', bins: ['subl'], lineStrategy: 'sublime' },
   { id: 'notepadpp', label: 'Notepad++', bins: ['notepad++'] },
-  { id: 'vim', label: 'Vim', bins: ['vim', 'gvim'], lineStrategy: 'plus' },
-  { id: 'nvim', label: 'Neovim', bins: ['nvim'], lineStrategy: 'plus' },
-  { id: 'emacs', label: 'Emacs', bins: ['emacs'], lineStrategy: 'plus' },
 ]
 
 /**

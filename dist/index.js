@@ -21,10 +21,7 @@ var EDITORS = [
   { id: "phpstorm", label: "PhpStorm", bins: ["phpstorm"] },
   { id: "rubymine", label: "RubyMine", bins: ["rubymine"] },
   { id: "sublime", label: "Sublime Text", bins: ["subl"], lineStrategy: "sublime" },
-  { id: "notepadpp", label: "Notepad++", bins: ["notepad++"] },
-  { id: "vim", label: "Vim", bins: ["vim", "gvim"], lineStrategy: "plus" },
-  { id: "nvim", label: "Neovim", bins: ["nvim"], lineStrategy: "plus" },
-  { id: "emacs", label: "Emacs", bins: ["emacs"], lineStrategy: "plus" }
+  { id: "notepadpp", label: "Notepad++", bins: ["notepad++"] }
 ];
 function fileManagerDef() {
   const platform = process.platform;
@@ -146,7 +143,6 @@ function buildArgs(config, def, path, line) {
   }
   if (line !== void 0 && def.lineStrategy) {
     if (def.lineStrategy === "vscode") return [...config.extraArgs, "--goto", `${path}:${line}`];
-    if (def.lineStrategy === "plus") return [...config.extraArgs, `+${line}`, path];
     return [...config.extraArgs, `${path}:${line}`];
   }
   return [...config.extraArgs, path];

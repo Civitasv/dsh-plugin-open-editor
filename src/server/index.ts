@@ -10,14 +10,13 @@
  *   (absolute, existing file or directory, optional `allowedRoots` allowlist)
  *   and launches the editor detached. With `line`, editors that support line
  *   targeting open the file at that line (`--goto file:line` for the VS Code
- *   family, `+line file` for vim/nvim/emacs, `file:line` for Sublime Text).
+ *   family, `file:line` for Sublime Text).
  *
  * Launch semantics:
  * - POSIX: `spawn(bin, args, { detached, stdio: 'ignore' })` and unref — the
  *   editor keeps running after the host exits.
  * - Windows: `cmd.exe /c start "" <bin> <args...>` — `start` detaches the app
- *   (GUI apps get no console; console apps like vim/nvim get their own
- *   window) and returns immediately. `.cmd`/`.bat` shims (code.cmd,
+ *   without creating a console window and returns immediately. `.cmd`/`.bat` shims (code.cmd,
  *   cursor.cmd …) work because cmd resolves them.
  */
 import type { Context } from '@deepseek-ai/cordis'
@@ -176,8 +175,8 @@ function validatePath(raw: unknown, allowedRoots: string[]): PathResult {
  * editor.
  *
  * On Windows the invocation goes through `cmd /c start "" <bin> <args…>`:
- * `start` detaches the app (GUI apps get no console; console apps like
- * vim/nvim get their own window) and returns right away, and cmd resolves
+ * `start` detaches the app without creating a console window and returns
+ * right away, and cmd resolves
  * `.cmd`/`.bat` shims (code.cmd, cursor.cmd …). Arguments are passed raw —
  * Node's CreateProcess quoting wraps any token containing spaces in quotes,
  * producing exactly the canonical `start` form (`""` = empty window title;
@@ -206,7 +205,7 @@ function launch(bin: string, args: string[]): void {
  *   present (otherwise the line is ignored).
  * - Built-ins: `extraArgs` + the target. With a file `line`, the editor's
  *   `lineStrategy` produces the target form (`--goto file:line`,
- *   `+line file`, `file:line`); editors without a strategy open the file
+ *   `file:line`); editors without a strategy open the file
  *   without a line.
  */
 function buildArgs(config: Config, def: EditorDef, path: string, line?: number): string[] {
@@ -225,7 +224,6 @@ function buildArgs(config: Config, def: EditorDef, path: string, line?: number):
   }
   if (line !== undefined && def.lineStrategy) {
     if (def.lineStrategy === 'vscode') return [...config.extraArgs, '--goto', `${path}:${line}`]
-    if (def.lineStrategy === 'plus') return [...config.extraArgs, `+${line}`, path]
     return [...config.extraArgs, `${path}:${line}`] // sublime
   }
   return [...config.extraArgs, path]
